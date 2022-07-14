@@ -11,8 +11,23 @@ app.use(morgan('dev'));
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use(cors());
+   
+function checkToken(req, res, next) {
+    var authorised = false;
+    
+    if(req.body.token == 123){
+        authorised = true
+    }
 
-app.post("/user", userController.all);
+    if (authorised) {
+        next();
+    }
+    else {
+        return res.status(403).send({status_code:123, data:"Invalid Token"});
+    }
+}
+
+app.post("/user", checkToken, userController.all);
 app.post("/user/:id", userController.get_by_id);
 
 app.listen(9000, () => console.log('Express started at http://localhost:9000'));
