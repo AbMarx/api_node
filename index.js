@@ -3,31 +3,27 @@ const express = require('express');
 const morgan = require('morgan');
 const cors = require('cors');
 const bodyParser = require('body-parser');
-const userController = require('./controller/userController');
 const app = express();
+var consign = require('consign');
+const apicache = require("apicache");
 
 app.use(compression());
 app.use(morgan('dev'));
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use(cors());
-   
-function checkToken(req, res, next) {
-    var authorised = false;
-    
-    if(req.body.token == 123){
-        authorised = true
-    }
 
-    if (authorised) {
-        next();
-    }
-    else {
-        return res.status(403).send({status_code:123, data:"Invalid Token"});
-    }
-}
+//FAZ O CACHEAMENTO DA API (MELHORAS NA PERFORMANCE)
+let cache = apicache.middleware
+app.use(cache('5 minutes'))
 
-app.post("/user", checkToken, userController.all);
-app.post("/user/:id", userController.get_by_id);
+
+//FAZ O AUTOLOAD DE TODOS OS ARQUIVOS DA CONTROLLER
+consign()
+  .then('controller')
+  .into(app);
+
+app.post("/user", app.controller.userController.checkToken, app.controller.userController.all);
+app.post("/user/:id", app.controller.userController.get_by_id);
 
 app.listen(9000, () => console.log('Express started at http://localhost:9000'));
